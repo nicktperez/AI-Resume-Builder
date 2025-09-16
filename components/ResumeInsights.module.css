@@ -1,0 +1,184 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.jobContext {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 0.5rem 1rem;
+}
+
+.jobContext summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--primary-dark);
+  list-style: none;
+}
+
+.jobContext summary::marker,
+.jobContext summary::-webkit-details-marker {
+  display: none;
+}
+
+.jobContextBody {
+  margin-top: 0.75rem;
+  white-space: pre-wrap;
+  font-size: 0.95rem;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+}
+
+.tabButton {
+  flex: 1 1 160px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: var(--muted);
+  transition: background 0.2s ease, color 0.2s ease;
+  cursor: pointer;
+}
+
+.tabButton:hover {
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--primary-dark);
+}
+
+.tabButtonActive {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 10px 20px -12px rgba(37, 99, 235, 0.9);
+}
+
+.tabPanel {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  padding: 1.5rem;
+}
+
+.resumeOutput {
+  white-space: pre-wrap;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  font-family: 'IBM Plex Sans', 'Inter', system-ui, sans-serif;
+  overflow-x: auto;
+}
+
+.diff {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow-x: auto;
+}
+
+.diffLine {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  align-items: start;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+}
+
+.diffLine + .diffLine {
+  margin-top: 0.1rem;
+}
+
+.diffSymbol {
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.diffAdded {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+.diffRemoved {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.diffUnchanged {
+  color: var(--foreground);
+}
+
+.keywordGrid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.keywordSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.keywordSection h4 {
+  margin: 0 0 0.5rem;
+}
+
+.keywordBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary-dark);
+}
+
+.badgeSuccess {
+  background: rgba(16, 185, 129, 0.16);
+  color: #047857;
+}
+
+.badgeWarning {
+  background: rgba(249, 115, 22, 0.16);
+  color: #b45309;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.insightsList {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .keywordGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

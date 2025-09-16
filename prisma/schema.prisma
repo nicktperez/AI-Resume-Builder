@@ -26,6 +26,7 @@ model ResumeGeneration {
   jobDescription   String
   originalResume   String
   generatedResume  String
+  insights         String?
   tone             String   @default("professional")
   seniority        String   @default("mid-level")
   format           String   @default("modern")

@@ -1,9 +1,12 @@
 import useSWR from 'swr';
+import ResumeInsights, { InsightSummary } from './ResumeInsights';
+import styles from './GenerationHistory.module.css';
 
 interface GenerationItem {
   id: string;
   jobDescription: string;
   generatedResume: string;
+  originalResume: string;
   createdAt: string;
   tone: 'professional' | 'friendly' | 'bold';
   seniority: 'entry-level' | 'mid-level' | 'senior';
@@ -46,6 +49,18 @@ export default function GenerationHistory({ refreshKey }: { refreshKey: number }
     revalidateOnFocus: false
   });
 
+  const formatJobSnippet = (jobDescription: string) => {
+    const trimmed = jobDescription.trim();
+    if (!trimmed) {
+      return 'Job description not available';
+    }
+    const words = trimmed.split(/\s+/);
+    if (words.length <= 24) {
+      return trimmed;
+    }
+    return `${words.slice(0, 24).join(' ')}…`;
+  };
+
   if (isLoading) {
     return <p>Loading your tailored resumes…</p>;
   }
@@ -64,8 +79,9 @@ export default function GenerationHistory({ refreshKey }: { refreshKey: number }
   return (
     <div className="card">
       <h3>Recent tailored resumes</h3>
-      <div style={{ display: 'grid', gap: '1.5rem', marginTop: '1.5rem' }}>
+      <div className={styles.list}>
         {data.generations.map((generation) => (
+          <div key={generation.id} className={styles.entry}>
           <div key={generation.id} style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem' }}>
             <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
               {new Date(generation.createdAt).toLocaleString()}
@@ -77,19 +93,22 @@ export default function GenerationHistory({ refreshKey }: { refreshKey: number }
               <strong style={{ color: 'var(--foreground)' }}>{generation.includeCoverLetter ? 'Included' : 'Not included'}</strong>
             </p>
             <details>
-              <summary style={{ cursor: 'pointer', fontWeight: 600 }}>View tailored resume</summary>
-              <pre
-                style={{
-                  whiteSpace: 'pre-wrap',
-                  background: '#f8fafc',
-                  padding: '1rem',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border)',
-                  marginTop: '1rem'
-                }}
-              >
-                {generation.generatedResume}
-              </pre>
+              <summary>
+                <div className={styles.summary}>
+                  <span className={styles.date}>{new Date(generation.createdAt).toLocaleString()}</span>
+                  <span className={styles.role}>
+                    Tailored for: {formatJobSnippet(generation.jobDescription)}
+                  </span>
+                </div>
+              </summary>
+              <div className={styles.content}>
+                <ResumeInsights
+                  tailoredResume={generation.generatedResume}
+                  originalResume={generation.originalResume}
+                  jobDescription={generation.jobDescription}
+                  insights={generation.insights}
+                />
+              </div>
             </details>
           </div>
         ))}

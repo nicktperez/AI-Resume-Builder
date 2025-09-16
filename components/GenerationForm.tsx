@@ -1,4 +1,5 @@
 import { FormEvent, useMemo, useState } from 'react';
+import ResumeInsights, { InsightSummary } from './ResumeInsights';
 
 interface GenerationFormProps {
   isPro: boolean;
@@ -8,6 +9,7 @@ interface GenerationFormProps {
 
 interface GenerationResponse {
   result: string;
+  insights?: InsightSummary;
 }
 
 const toneOptions = [
@@ -36,6 +38,9 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
   const [format, setFormat] = useState(formatOptions[1].value);
   const [includeCoverLetter, setIncludeCoverLetter] = useState(false);
   const [result, setResult] = useState('');
+  const [insights, setInsights] = useState<InsightSummary | null>(null);
+  const [submittedResume, setSubmittedResume] = useState('');
+  const [submittedJobDescription, setSubmittedJobDescription] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -72,7 +77,15 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
       }
 
       const data: GenerationResponse = await response.json();
+
+      if (!data.result) {
+        throw new Error('The tailored resume was missing from the response. Please try again.');
+      }
+
       setResult(data.result);
+      setInsights(data.insights ?? null);
+      setSubmittedResume(resume);
+      setSubmittedJobDescription(jobDescription);
       onGenerated();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -213,21 +226,16 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
       {result && (
         <div style={{ marginTop: '2.5rem' }}>
           <h3>Tailored resume</h3>
-          <p style={{ color: 'var(--muted)' }}>
+          <p style={{ color: 'var(--muted)', marginBottom: '1.5rem' }}>
             Copy this version directly into your application tracking system or download it as a PDF.
             If you requested a cover letter, you&apos;ll find it neatly appended below the resume.
           </p>
-          <pre
-            style={{
-              whiteSpace: 'pre-wrap',
-              background: '#f8fafc',
-              padding: '1.5rem',
-              borderRadius: '12px',
-              border: '1px solid var(--border)'
-            }}
-          >
-            {result}
-          </pre>
+          <ResumeInsights
+            tailoredResume={result}
+            originalResume={submittedResume}
+            jobDescription={submittedJobDescription}
+            insights={insights}
+          />
         </div>
       )}
     </div>
