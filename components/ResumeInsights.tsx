@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { computeLineDiff, DiffSegment } from '../lib/diff';
+import styles from './ResumeInsights.module.css';
 
 export interface InsightSummary {
   matchedKeywords?: string[];
@@ -21,6 +22,9 @@ const tabs: { id: TabKey; label: string }[] = [
   { id: 'diff', label: 'Before vs. after' },
   { id: 'keywords', label: 'Keyword checklist' }
 ];
+
+const classNames = (...classes: Array<string | false | null | undefined>) =>
+  classes.filter(Boolean).join(' ');
 
 const toTextArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
@@ -44,11 +48,16 @@ const toTextArray = (value: unknown): string[] => {
 
 const renderDiffLine = (segment: DiffSegment, index: number) => {
   const symbol = segment.type === 'added' ? '+' : segment.type === 'removed' ? '-' : ' ';
-  const className = `diff-line diff-${segment.type}`;
+  const typeClass =
+    segment.type === 'added'
+      ? styles.diffAdded
+      : segment.type === 'removed'
+      ? styles.diffRemoved
+      : styles.diffUnchanged;
 
   return (
-    <div key={`${segment.type}-${index}`} className={className}>
-      <span aria-hidden="true" className="diff-symbol">
+    <div key={`${segment.type}-${index}`} className={classNames(styles.diffLine, typeClass)}>
+      <span aria-hidden="true" className={styles.diffSymbol}>
         {symbol}
       </span>
       <span>{segment.value || ' '}</span>
@@ -58,13 +67,15 @@ const renderDiffLine = (segment: DiffSegment, index: number) => {
 
 const renderBadges = (items: string[], emptyLabel: string, variant: 'success' | 'warning') => {
   if (!items.length) {
-    return <p className="muted">{emptyLabel}</p>;
+    return <p className={styles.muted}>{emptyLabel}</p>;
   }
 
+  const variantClass = variant === 'success' ? styles.badgeSuccess : styles.badgeWarning;
+
   return (
-    <div className="keyword-badges">
+    <div className={styles.keywordBadges}>
       {items.map((item) => (
-        <span key={item} className={`badge badge-${variant}`}>
+        <span key={item} className={classNames(styles.badge, variantClass)}>
           {item}
         </span>
       ))}
@@ -74,11 +85,11 @@ const renderBadges = (items: string[], emptyLabel: string, variant: 'success' | 
 
 const renderSuggestions = (items: string[]) => {
   if (!items.length) {
-    return <p className="muted">Nothing else to add—your resume already aligns well.</p>;
+    return <p className={styles.muted}>Nothing else to add—your resume already aligns well.</p>;
   }
 
   return (
-    <ul className="insights-list">
+    <ul className={styles.insightsList}>
       {items.map((item) => (
         <li key={item}>{item}</li>
       ))}
@@ -108,22 +119,22 @@ export default function ResumeInsights({
   const diff = useMemo(() => computeLineDiff(originalResume, tailoredResume), [originalResume, tailoredResume]);
 
   return (
-    <div className="insights">
+    <div className={styles.root}>
       {jobDetails && (
-        <details className="job-context">
+        <details className={styles.jobContext}>
           <summary>View job description context</summary>
-          <pre>{jobDetails}</pre>
+          <pre className={styles.jobContextBody}>{jobDetails}</pre>
         </details>
       )}
 
-      <div className="tabs" role="tablist" aria-label="Tailored resume insights">
+      <div className={styles.tabs} role="tablist" aria-label="Tailored resume insights">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             type="button"
             role="tab"
             aria-selected={activeTab === tab.id}
-            className={`tab-button ${activeTab === tab.id ? 'is-active' : ''}`}
+            className={classNames(styles.tabButton, activeTab === tab.id && styles.tabButtonActive)}
             onClick={() => setActiveTab(tab.id)}
           >
             {tab.label}
@@ -131,30 +142,36 @@ export default function ResumeInsights({
         ))}
       </div>
 
-      <div className="tab-panel" role="tabpanel">
-        {activeTab === 'resume' && (
-          <pre className="resume-output">{tailoredResume}</pre>
-        )}
+      <div className={styles.tabPanel} role="tabpanel">
+        {activeTab === 'resume' && <pre className={styles.resumeOutput}>{tailoredResume}</pre>}
         {activeTab === 'diff' && (
-          <div className="diff" aria-live="polite">
+          <div className={styles.diff} aria-live="polite">
             {diff.map((segment, index) => renderDiffLine(segment, index))}
           </div>
         )}
         {activeTab === 'keywords' && (
-          <div className="keyword-grid">
-            <div className="keyword-section">
+          <div className={styles.keywordGrid}>
+            <div className={styles.keywordSection}>
               <h4>Matched keywords</h4>
-              <p className="muted">These phrases from the job description now appear in your resume.</p>
-              {renderBadges(normalizedInsights.matchedKeywords, 'No strong keyword matches yet—consider weaving in more role-specific language.', 'success')}
+              <p className={styles.muted}>These phrases from the job description now appear in your resume.</p>
+              {renderBadges(
+                normalizedInsights.matchedKeywords,
+                'No strong keyword matches yet—consider weaving in more role-specific language.',
+                'success'
+              )}
             </div>
-            <div className="keyword-section">
+            <div className={styles.keywordSection}>
               <h4>Missing skills</h4>
-              <p className="muted">Keywords from the job posting that still aren&apos;t covered.</p>
-              {renderBadges(normalizedInsights.missingSkills, 'Great news—no important skills appear to be missing.', 'warning')}
+              <p className={styles.muted}>Keywords from the job posting that still aren&apos;t covered.</p>
+              {renderBadges(
+                normalizedInsights.missingSkills,
+                'Great news—no important skills appear to be missing.',
+                'warning'
+              )}
             </div>
-            <div className="keyword-section">
+            <div className={styles.keywordSection}>
               <h4>Suggested improvements</h4>
-              <p className="muted">Action items to strengthen your next edit.</p>
+              <p className={styles.muted}>Action items to strengthen your next edit.</p>
               {renderSuggestions(normalizedInsights.suggestedImprovements)}
             </div>
           </div>

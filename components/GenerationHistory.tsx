@@ -1,5 +1,6 @@
 import useSWR from 'swr';
 import ResumeInsights, { InsightSummary } from './ResumeInsights';
+import styles from './GenerationHistory.module.css';
 
 interface GenerationItem {
   id: string;
@@ -57,17 +58,19 @@ export default function GenerationHistory({ refreshKey }: { refreshKey: number }
   return (
     <div className="card">
       <h3>Recent tailored resumes</h3>
-      <div style={{ display: 'grid', gap: '1.5rem', marginTop: '1.5rem' }}>
+      <div className={styles.list}>
         {data.generations.map((generation) => (
-          <div key={generation.id} className="history-entry">
+          <div key={generation.id} className={styles.entry}>
             <details>
               <summary>
-                <div className="history-summary">
-                  <span className="history-date">{new Date(generation.createdAt).toLocaleString()}</span>
-                  <span className="history-role">Tailored for: {formatJobSnippet(generation.jobDescription)}</span>
+                <div className={styles.summary}>
+                  <span className={styles.date}>{new Date(generation.createdAt).toLocaleString()}</span>
+                  <span className={styles.role}>
+                    Tailored for: {formatJobSnippet(generation.jobDescription)}
+                  </span>
                 </div>
               </summary>
-              <div className="history-content">
+              <div className={styles.content}>
                 <ResumeInsights
                   tailoredResume={generation.generatedResume}
                   originalResume={generation.originalResume}

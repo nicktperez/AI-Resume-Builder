@@ -123,9 +123,6 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
           <h3>Tailored resume</h3>
           <p style={{ color: 'var(--muted)', marginBottom: '1.5rem' }}>
             Copy this version directly into your application tracking system or download it as a PDF.
-            <span style={{ display: 'block', marginTop: '0.5rem' }}>
-              Use the tabs below to review the diff and confirm the keyword coverage before you submit.
-            </span>
           </p>
           <ResumeInsights
             tailoredResume={result}

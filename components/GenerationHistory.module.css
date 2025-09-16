@@ -1,0 +1,50 @@
+.list {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.entry details {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #f8fafc;
+  padding: 1rem 1.25rem;
+}
+
+.entry summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.entry summary::marker,
+.entry summary::-webkit-details-marker {
+  display: none;
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.date {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.role {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.content {
+  margin-top: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .summary {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+}
