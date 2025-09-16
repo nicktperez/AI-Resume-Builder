@@ -147,3 +147,213 @@ form .field {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.dashboard-intro {
+  display: grid;
+  gap: 2rem;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .dashboard-intro {
+    grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  }
+}
+
+.intro-copy h1 {
+  margin: 0 0 0.5rem;
+}
+
+.intro-subhead {
+  color: var(--muted);
+  margin: 0;
+}
+
+.upgrade-button {
+  margin-top: 1rem;
+}
+
+.upgrade-footnote {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  max-width: 28rem;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.credit-meter {
+  display: grid;
+  place-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.credit-meter--pro {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(99, 102, 241, 0.12));
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+.credit-ring {
+  --progress: 0%;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: conic-gradient(var(--primary) var(--progress), rgba(37, 99, 235, 0.12) 0);
+  display: grid;
+  place-items: center;
+  position: relative;
+  transition: background 0.3s ease;
+}
+
+.credit-ring::after {
+  content: '';
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.08);
+}
+
+.credit-ring .credit-count {
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--primary-dark);
+}
+
+.credit-meter__label {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.credit-meter__caption {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  max-width: 14rem;
+  line-height: 1.4;
+}
+
+.upsell-banner {
+  border-radius: 18px;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.95), rgba(219, 234, 254, 0.9));
+  border: 1px solid rgba(250, 204, 21, 0.5);
+  box-shadow: 0 20px 48px -28px rgba(15, 23, 42, 0.4);
+  color: #7c2d12;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  line-height: 1.6;
+}
+
+.upsell-banner strong {
+  color: #92400e;
+}
+
+.pro-feature-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.locked-tile {
+  position: relative;
+  border-radius: 18px;
+  padding: 1.5rem;
+  background: #fff;
+  border: 1px dashed rgba(37, 99, 235, 0.35);
+  box-shadow: 0 24px 48px -32px rgba(15, 23, 42, 0.35);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+.locked-tile:hover,
+.locked-tile:focus-visible {
+  transform: translateY(-4px);
+  border-color: rgba(37, 99, 235, 0.75);
+  box-shadow: 0 28px 60px -32px rgba(37, 99, 235, 0.45);
+}
+
+.locked-tile__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.locked-tile h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.locked-tile p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.feature-roi {
+  margin-top: 0.75rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
+.lock-badge {
+  background: rgba(37, 99, 235, 0.14);
+  color: var(--primary-dark);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.locked-tile::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 1rem);
+  transform: translate(-50%, 10px);
+  background: rgba(17, 24, 39, 0.95);
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  box-shadow: 0 16px 32px -20px rgba(15, 23, 42, 0.65);
+  width: min(260px, 90vw);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  z-index: 10;
+}
+
+.locked-tile::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.75rem);
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: rgba(17, 24, 39, 0.95);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 9;
+}
+
+.locked-tile:hover::after,
+.locked-tile:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.locked-tile:hover::before,
+.locked-tile:focus-visible::before {
+  opacity: 1;
+}
