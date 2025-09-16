@@ -22,36 +22,57 @@ export default function Header() {
     revalidateOnFocus: false
   });
 
+  const isAuthenticated = Boolean(data?.user);
+  const isPro = Boolean(data?.user?.isPro);
+
   return (
     <header className="header">
       <div className="container header-inner">
         <Link href="/">
-          <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>AI Resume Tailor</span>
+          <span className="brand">AI Resume Tailor</span>
         </Link>
         <nav className="nav-links">
-          {data?.user ? (
+          <Link href="/#features">Features</Link>
+          <Link href="/#testimonials">Testimonials</Link>
+          <Link href="/#pricing">Pricing</Link>
+          <Link href="/#comparison">Compare</Link>
+          {isAuthenticated ? (
+            <Link href="/dashboard">Workspace</Link>
+          ) : (
+            <Link href="/login">Login</Link>
+          )}
+        </nav>
+        <div className="nav-actions">
+          {isAuthenticated ? (
             <>
-              <span className="badge">
-                {data.user.isPro ? 'Pro Member' : 'Free Tier'}
+              <span className={`badge ${isPro ? 'badge-pro' : 'badge-neutral'}`}>
+                {isPro ? 'Pro Member' : 'Free Tier'}
               </span>
-              <Link href="/dashboard">Dashboard</Link>
+              <Link
+                href={isPro ? '/dashboard' : '/#pricing'}
+                className={`cta-pro ${isPro ? 'cta-pro--active' : ''}`}
+              >
+                {isPro ? 'View Pro perks' : 'Upgrade to Pro'}
+              </Link>
               <form action="/api/auth/logout" method="post">
-                <button type="submit" className="primary" style={{ padding: '0.5rem 1.25rem' }}>
+                <button type="submit" className="ghost-button">
                   Sign out
                 </button>
               </form>
             </>
           ) : (
             <>
-              <Link href="/login">Sign in</Link>
               <Link href="/register">
-                <button type="button" className="primary" style={{ padding: '0.5rem 1.25rem' }}>
-                  Get started
+                <button type="button" className="primary">
+                  Start for free
                 </button>
+              </Link>
+              <Link href="/#pricing" className="cta-pro">
+                Explore Pro
               </Link>
             </>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   );
