@@ -103,14 +103,16 @@ export default function ResumeInsights({
     [insights]
   );
 
+  const jobDetails = useMemo(() => jobDescription?.trim() ?? '', [jobDescription]);
+
   const diff = useMemo(() => computeLineDiff(originalResume, tailoredResume), [originalResume, tailoredResume]);
 
   return (
     <div className="insights">
-      {jobDescription && (
+      {jobDetails && (
         <details className="job-context">
           <summary>View job description context</summary>
-          <pre>{jobDescription}</pre>
+          <pre>{jobDetails}</pre>
         </details>
       )}
 

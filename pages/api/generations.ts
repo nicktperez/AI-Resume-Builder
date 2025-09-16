@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { z } from 'zod';
 import { prisma } from '../../lib/prisma';
 import { withSessionRoute } from '../../lib/withSession';
 
@@ -8,16 +9,22 @@ interface StoredInsights {
   suggestedImprovements?: string[];
 }
 
+const storedInsightsSchema = z
+  .object({
+    matchedKeywords: z.array(z.string()).optional(),
+    missingSkills: z.array(z.string()).optional(),
+    suggestedImprovements: z.array(z.string()).optional()
+  })
+  .partial();
+
 const parseInsights = (value: string | null): StoredInsights | null => {
   if (!value) {
     return null;
   }
 
   try {
-    const parsed = JSON.parse(value);
-    if (parsed && typeof parsed === 'object') {
-      return parsed as StoredInsights;
-    }
+    const parsed = storedInsightsSchema.parse(JSON.parse(value));
+    return parsed;
   } catch (error) {
     console.warn('Failed to parse stored insights', error);
   }

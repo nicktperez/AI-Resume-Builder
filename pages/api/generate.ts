@@ -9,35 +9,27 @@ const schema = z.object({
   resume: z.string().min(50, 'Please paste the full text of your resume.')
 });
 
-interface TailoringPayload {
-  tailoredResume: string;
-  matchedKeywords?: unknown;
-  missingSkills?: unknown;
-  suggestedImprovements?: unknown;
-}
+const stringListSchema = z
+  .array(z.union([z.string(), z.number()]))
+  .optional()
+  .default([])
+  .transform((items) =>
+    items
+      .map((item) => (typeof item === 'number' ? String(item) : item))
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0)
+  );
 
-interface TailoringInsights {
-  matchedKeywords: string[];
-  missingSkills: string[];
-  suggestedImprovements: string[];
-}
+const tailoringPayloadSchema = z.object({
+  tailoredResume: z.string().trim().min(1, 'The tailored resume was missing from the response.'),
+  matchedKeywords: stringListSchema,
+  missingSkills: stringListSchema,
+  suggestedImprovements: stringListSchema
+});
 
-const toStringArray = (value: unknown): string[] => {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value
-    .map((item) => {
-      if (typeof item === 'string') {
-        return item.trim();
-      }
-      if (typeof item === 'number') {
-        return String(item);
-      }
-      return '';
-    })
-    .filter(Boolean);
-};
+type TailoringPayload = z.infer<typeof tailoringPayloadSchema>;
+
+type TailoringInsights = Omit<TailoringPayload, 'tailoredResume'>;
 
 export default withSessionRoute(async function generateRoute(
   req: NextApiRequest,
@@ -161,22 +153,19 @@ export default withSessionRoute(async function generateRoute(
 
     let payload: TailoringPayload;
     try {
-      payload = JSON.parse(rawOutput) as TailoringPayload;
+      const parsed = JSON.parse(rawOutput);
+      payload = tailoringPayloadSchema.parse(parsed);
     } catch (parseError) {
       console.error('Failed to parse OpenAI response', parseError, rawOutput);
       return res.status(500).json({ error: 'The AI response was invalid. Please try again.' });
     }
 
-    const tailoredResume = typeof payload.tailoredResume === 'string' ? payload.tailoredResume.trim() : '';
-
-    if (!tailoredResume) {
-      return res.status(500).json({ error: 'The AI response was invalid. Please try again.' });
-    }
+    const { tailoredResume, matchedKeywords, missingSkills, suggestedImprovements } = payload;
 
     const insights: TailoringInsights = {
-      matchedKeywords: toStringArray(payload.matchedKeywords),
-      missingSkills: toStringArray(payload.missingSkills),
-      suggestedImprovements: toStringArray(payload.suggestedImprovements)
+      matchedKeywords,
+      missingSkills,
+      suggestedImprovements
     };
 
     await prisma.$transaction([
