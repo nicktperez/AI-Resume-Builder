@@ -94,6 +94,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
           minLength={8}
           required
         />
+        {mode === 'register' && (
+          <div className="helper">
+            Must be at least 8 characters with uppercase, lowercase, and number
+          </div>
+        )}
       </div>
 
       <button type="submit" className="primary" disabled={isLoading}>

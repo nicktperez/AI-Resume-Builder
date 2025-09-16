@@ -5,9 +5,11 @@ import { hashPassword } from '../../../lib/auth';
 import { withSessionRoute, NextApiRequestWithSession } from '../../../lib/withSession';
 
 const schema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  name: z.string().min(1)
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters long')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain at least one uppercase letter, one lowercase letter, and one number'),
+  name: z.string().min(1, 'Name is required')
 });
 
 export default withSessionRoute(async function registerRoute(
@@ -21,7 +23,8 @@ export default withSessionRoute(async function registerRoute(
 
   const parse = schema.safeParse(req.body);
   if (!parse.success) {
-    return res.status(400).json({ error: 'Invalid request body' });
+    const errorMessage = parse.error.errors[0]?.message || 'Invalid request body';
+    return res.status(400).json({ error: errorMessage });
   }
 
   const { email, password, name } = parse.data;

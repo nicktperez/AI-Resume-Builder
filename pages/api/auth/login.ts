@@ -5,8 +5,8 @@ import { verifyPassword } from '../../../lib/auth';
 import { withSessionRoute, NextApiRequestWithSession } from '../../../lib/withSession';
 
 const schema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8)
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(1, 'Password is required')
 });
 
 export default withSessionRoute(async function loginRoute(
@@ -20,7 +20,8 @@ export default withSessionRoute(async function loginRoute(
 
   const parse = schema.safeParse(req.body);
   if (!parse.success) {
-    return res.status(400).json({ error: 'Invalid request body' });
+    const errorMessage = parse.error.errors[0]?.message || 'Invalid request body';
+    return res.status(400).json({ error: errorMessage });
   }
 
   const { email, password } = parse.data;
