@@ -26,15 +26,18 @@ export default function DashboardPage() {
     revalidateOnFocus: false
   });
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   useEffect(() => {
     if (error) {
+      console.error('Session error:', error);
       window.location.href = '/login';
     }
   }, [error]);
 
   useEffect(() => {
     if (data && !data.user) {
+      console.log('No user found in session');
       window.location.href = '/login';
     }
   }, [data]);
@@ -83,15 +86,40 @@ export default function DashboardPage() {
   };
 
   const handleUpgrade = async () => {
-    const response = await fetch('/api/stripe/create-checkout-session', {
-      method: 'POST'
-    });
-    if (!response.ok) {
-      alert('Unable to start checkout. Please try again later.');
-      return;
+    setIsUpgrading(true);
+    try {
+      const response = await fetch('/api/stripe/create-checkout-session', {
+        method: 'POST'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Checkout error:', errorData);
+        
+        if (response.status === 401) {
+          alert('Please log in again to upgrade your account.');
+          window.location.href = '/login';
+        } else if (response.status === 500) {
+          alert('Stripe is not configured. Please contact support.');
+        } else {
+          alert(errorData.error || 'Unable to start checkout. Please try again later.');
+        }
+        return;
+      }
+      
+      const data = await response.json();
+      if (!data.url) {
+        alert('Invalid checkout response. Please try again.');
+        return;
+      }
+      
+      window.location.href = data.url;
+    } catch (err) {
+      console.error('Upgrade error:', err);
+      alert('Network error. Please check your connection and try again.');
+    } finally {
+      setIsUpgrading(false);
     }
-    const data = await response.json();
-    window.location.href = data.url;
   };
 
   return (
@@ -108,8 +136,13 @@ export default function DashboardPage() {
             </p>
             {!data.user.isPro && (
               <>
-                <button className="primary upgrade-button" type="button" onClick={handleUpgrade}>
-                  Upgrade to Pro for unlimited resumes
+                <button 
+                  className="primary upgrade-button" 
+                  type="button" 
+                  onClick={handleUpgrade}
+                  disabled={isUpgrading}
+                >
+                  {isUpgrading ? 'Starting checkout...' : 'Upgrade to Pro for unlimited resumes'}
                 </button>
                 <p className="upgrade-footnote">
                   Unlock unlimited keyword gap analysis, instant cover letters, and export history so each

@@ -1,15 +1,15 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { prisma } from '../../../lib/prisma';
-import { withSessionRoute } from '../../../lib/withSession';
+import { withSessionRoute, NextApiRequestWithSession } from '../../../lib/withSession';
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripePriceId = process.env.STRIPE_PRICE_ID;
 
-const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2024-04-10' }) : null;
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' }) : null;
 
 export default withSessionRoute(async function createCheckoutSessionRoute(
-  req: NextApiRequest,
+  req: NextApiRequestWithSession,
   res: NextApiResponse
 ) {
   if (req.method !== 'POST') {

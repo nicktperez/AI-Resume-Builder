@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { withSessionRoute } from '../../../lib/withSession';
+import { withSessionRoute, NextApiRequestWithSession } from '../../../lib/withSession';
 
 export default withSessionRoute(async function logoutRoute(
-  req: NextApiRequest,
+  req: NextApiRequestWithSession,
   res: NextApiResponse
 ) {
   if (req.method !== 'POST') {

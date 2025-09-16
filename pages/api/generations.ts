@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { prisma } from '../../lib/prisma';
-import { withSessionRoute } from '../../lib/withSession';
+import { withSessionRoute, NextApiRequestWithSession } from '../../lib/withSession';
 
 interface StoredInsights {
   matchedKeywords?: string[];
@@ -33,7 +33,7 @@ const parseInsights = (value: string | null): StoredInsights | null => {
 };
 
 export default withSessionRoute(async function generationsRoute(
-  req: NextApiRequest,
+  req: NextApiRequestWithSession,
   res: NextApiResponse
 ) {
   if (req.method !== 'GET') {

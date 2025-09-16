@@ -61,6 +61,27 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
       return;
     }
 
+    // Basic validation
+    if (!jobDescription.trim()) {
+      setError('Please provide a job description.');
+      return;
+    }
+
+    if (!resume.trim()) {
+      setError('Please provide your resume text.');
+      return;
+    }
+
+    if (jobDescription.length < 20) {
+      setError('Please provide a more detailed job description (at least 20 characters).');
+      return;
+    }
+
+    if (resume.length < 50) {
+      setError('Please provide a more complete resume (at least 50 characters).');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await fetch('/api/generate', {
@@ -73,7 +94,17 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Unable to generate a tailored resume right now.');
+        if (response.status === 402) {
+          setError('You have reached your free limit. Upgrade to Pro for unlimited tailoring.');
+        } else if (response.status === 401) {
+          setError('Please log in again to continue.');
+          window.location.href = '/login';
+        } else if (response.status === 429) {
+          setError('Too many requests. Please wait a moment and try again.');
+        } else {
+          throw new Error(data.error || 'Unable to generate a tailored resume right now.');
+        }
+        return;
       }
 
       const data: GenerationResponse = await response.json();
@@ -88,7 +119,8 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
       setSubmittedJobDescription(jobDescription);
       onGenerated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      console.error('Generation error:', err);
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -96,9 +128,9 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
 
   return (
     <div className="card" style={{ marginBottom: '2rem' }}>
-      <form onSubmit={handleSubmit}>
-        <h2 style={{ marginTop: 0 }}>Tailor your resume</h2>
-        <p style={{ color: 'var(--muted)' }}>
+      <form onSubmit={handleSubmit} role="form" aria-label="Resume tailoring form">
+        <h2 style={{ marginTop: 0 }} id="form-title">Tailor your resume</h2>
+        <p style={{ color: 'var(--muted)' }} id="form-description">
           Paste the job description, choose how bold or friendly you want to sound, and we&apos;ll rework
           your resume to match. You can even append a cover letter in the same pass.
         </p>
@@ -112,7 +144,12 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
             value={jobDescription}
             onChange={(event) => setJobDescription(event.target.value)}
             required
+            aria-describedby="job-description-help"
+            aria-invalid={error && jobDescription.length < 20 ? 'true' : 'false'}
           />
+          <div id="job-description-help" className="helper">
+            Provide a detailed job description (at least 20 characters) to get the best results.
+          </div>
         </div>
 
         <div className="field">
@@ -124,10 +161,15 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
             value={resume}
             onChange={(event) => setResume(event.target.value)}
             required
+            aria-describedby="resume-help"
+            aria-invalid={error && resume.length < 50 ? 'true' : 'false'}
           />
+          <div id="resume-help" className="helper">
+            Paste your complete resume text (at least 50 characters) for optimal tailoring.
+          </div>
         </div>
 
-        <div
+        <fieldset
           style={{
             margin: '2rem 0',
             padding: '1.5rem',
@@ -136,7 +178,9 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
             background: '#f8fafc'
           }}
         >
-          <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>Personalize the rewrite</h3>
+          <legend>
+            <h3 style={{ margin: '0 0 1rem', fontSize: '1.1rem' }}>Personalize the rewrite</h3>
+          </legend>
           <p style={{ color: 'var(--muted)', margin: '0 0 1.5rem', fontSize: '0.95rem' }}>
             These preferences will be saved with your history so you can revisit what worked best for
             each application.
@@ -191,9 +235,6 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
           </div>
 
           <div className="field" style={{ margin: '1.5rem 0 0' }}>
-            <label htmlFor="includeCoverLetter" style={{ marginBottom: '0.75rem' }}>
-              Cover letter companion
-            </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <input
                 id="includeCoverLetter"
@@ -201,26 +242,50 @@ export default function GenerationForm({ isPro, remaining, onGenerated }: Genera
                 checked={includeCoverLetter}
                 onChange={(event) => setIncludeCoverLetter(event.target.checked)}
                 style={{ width: '1.2rem', height: '1.2rem' }}
+                aria-describedby="cover-letter-help"
               />
-              <span style={{ color: 'var(--muted)', fontSize: '0.95rem' }}>
-                Append a tailored cover letter after the resume using the same tone.
-              </span>
+              <label htmlFor="includeCoverLetter" style={{ marginBottom: '0.75rem', cursor: 'pointer' }}>
+                Cover letter companion
+              </label>
+            </div>
+            <div id="cover-letter-help" className="helper">
+              Append a tailored cover letter after the resume using the same tone.
             </div>
           </div>
-        </div>
+        </fieldset>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button className="primary" type="submit" disabled={isLoading || isDisabled}>
+          <button 
+            className="primary" 
+            type="submit" 
+            disabled={isLoading || isDisabled}
+            aria-describedby="submit-help"
+            aria-busy={isLoading}
+          >
             {isLoading ? 'Tailoring…' : 'Tailor now'}
           </button>
           {!isPro && (
-            <span style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>
+            <span 
+              id="submit-help"
+              style={{ color: 'var(--muted)', fontSize: '0.9rem' }}
+              role="status"
+              aria-live="polite"
+            >
               {remaining} free {remaining === 1 ? 'resume' : 'resumes'} left
             </span>
           )}
         </div>
 
-        {error && <p className="error">{error}</p>}
+        {error && (
+          <div 
+            className="error" 
+            role="alert" 
+            aria-live="assertive"
+            style={{ marginTop: '1rem' }}
+          >
+            {error}
+          </div>
+        )}
       </form>
 
       {result && (

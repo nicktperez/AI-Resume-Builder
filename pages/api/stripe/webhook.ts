@@ -12,7 +12,7 @@ export const config = {
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2024-04-10' }) : null;
+const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' }) : null;
 
 export default async function stripeWebhookRoute(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

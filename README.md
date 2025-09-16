@@ -15,8 +15,26 @@ requirements.
 - 📜 **History log** – The last 10 tailored resumes are stored securely for quick access and export.
 - 🔐 **Secure sessions** – Email/password auth backed by iron-session and Prisma keeps accounts
   private.
+- 🛡️ **Security features** – Rate limiting, CSRF protection, input sanitization, and security headers.
+- 📊 **Performance optimizations** – Caching, critical CSS, and optimized loading.
+- ♿ **Accessibility** – ARIA labels, keyboard navigation, and screen reader support.
+- 📈 **Monitoring** – Error tracking with Sentry and structured logging.
+- 🧪 **Testing** – Comprehensive unit tests with Jest and React Testing Library.
 
 ## Getting started
+
+### Quick Setup (Recommended)
+
+```bash
+# Run the automated setup script
+npm run setup
+
+# Add your OpenAI API key to .env.local
+# Then start the development server
+npm run dev
+```
+
+### Manual Setup
 
 ### 1. Install dependencies
 
@@ -42,6 +60,7 @@ cp .env.example .env.local
 | `STRIPE_PRICE_ID` | Price ID for the recurring Pro subscription. |
 | `STRIPE_WEBHOOK_SECRET` | Secret from your Stripe webhook endpoint. |
 | `NEXT_PUBLIC_BASE_URL` | Public URL for redirecting to success/cancel pages. |
+| `SENTRY_DSN` | (Optional) Sentry DSN for error monitoring. |
 
 ### 3. Initialise the database
 
@@ -76,10 +95,41 @@ events:
 
 Use the provided signing secret as `STRIPE_WEBHOOK_SECRET`.
 
-## Testing linting
+## Development
+
+### Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+### Linting
 
 ```bash
 npm run lint
+```
+
+### Database management
+
+```bash
+# Generate Prisma client
+npm run prisma:generate
+
+# Run database migrations
+npm run prisma:migrate
+
+# Open Prisma Studio
+npm run prisma:studio
+
+# Deploy migrations (production)
+npm run prisma:deploy
 ```
 
 ## Project structure

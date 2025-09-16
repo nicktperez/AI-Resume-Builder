@@ -1,8 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 import { z } from 'zod';
+import crypto from 'crypto';
 import { prisma } from '../../lib/prisma';
-import { withSessionRoute } from '../../lib/withSession';
+import { withSessionRoute, NextApiRequestWithSession } from '../../lib/withSession';
+import { generateRateLimit } from '../../lib/rateLimit';
+import logger, { logError, logInfo, logWarn } from '../../lib/logger';
+import cache, { cacheKeys, cacheTTL } from '../../lib/cache';
+import { setSecurityHeaders, sanitizeInput } from '../../lib/security';
 
 const toneSchema = z.enum(['professional', 'friendly', 'bold']);
 const senioritySchema = z.enum(['entry-level', 'mid-level', 'senior']);
@@ -61,9 +66,12 @@ type TailoringPayload = z.infer<typeof tailoringPayloadSchema>;
 type TailoringInsights = Omit<TailoringPayload, 'tailoredResume'>;
 
 export default withSessionRoute(async function generateRoute(
-  req: NextApiRequest,
+  req: NextApiRequestWithSession,
   res: NextApiResponse
 ) {
+  // Set security headers
+  setSecurityHeaders(res);
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Method not allowed' });
@@ -73,38 +81,79 @@ export default withSessionRoute(async function generateRoute(
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  // Apply rate limiting
+  if (!generateRateLimit(req, res)) {
+    logWarn('Rate limit exceeded for generate endpoint', { 
+      userId: req.session.userId,
+      ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress 
+    });
+    return;
+  }
+
   const parse = schema.safeParse(req.body);
   if (!parse.success) {
+    logWarn('Invalid request body for generate endpoint', { 
+      userId: req.session.userId,
+      errors: parse.error.errors 
+    });
     return res.status(400).json({ error: parse.error.errors[0]?.message || 'Invalid request body' });
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
+    logError('OpenAI API key not configured');
     return res.status(500).json({ error: 'OpenAI API key is not configured.' });
   }
 
   const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
   if (!user) {
     await req.session.destroy();
+    logWarn('User not found during generation', { userId: req.session.userId });
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   if (!user.isPro && user.resumeCount >= 2) {
+    logInfo('User hit free limit', { userId: user.id, resumeCount: user.resumeCount });
     return res.status(402).json({ error: 'Upgrade to Pro for unlimited resumes.' });
   }
 
   const { jobDescription, resume, tone, seniority, format, includeCoverLetter } = parse.data;
 
+  // Sanitize inputs
+  const sanitizedJobDescription = sanitizeInput(jobDescription);
+  const sanitizedResume = sanitizeInput(resume);
+
+  // Create cache key for this generation
+  const inputHash = crypto.createHash('md5')
+    .update(`${sanitizedJobDescription}-${sanitizedResume}-${tone}-${seniority}-${format}-${includeCoverLetter}`)
+    .digest('hex');
+  
+  const cacheKey = cacheKeys.resumeGeneration(user.id, inputHash);
+  
+  // Check cache first
+  const cachedResult = cache.get<{ result: string; insights: TailoringInsights }>(cacheKey);
+  if (cachedResult) {
+    logInfo('Cache hit for resume generation', { userId: user.id, cacheKey });
+    return res.status(200).json(cachedResult);
+  }
+
   try {
+    logInfo('Starting resume generation', { 
+      userId: user.id, 
+      isPro: user.isPro,
+      tone,
+      seniority,
+      format,
+      includeCoverLetter 
+    });
+
     const openai = new OpenAI({ apiKey });
 
-    const prompt = `You are an expert resume writer. Rewrite the following resume so it is perfectly tailored for the job description.\n\nJob description:\n${jobDescription}\n\nCandidate resume:\n${resume}\n\nPersonalization targets:\n- ${toneGuidance[tone]}\n- ${seniorityGuidance[seniority]}\n- ${formatGuidance[format]}\n\nRewrite requirements:\n- Mirror the most important keywords, tools, and priorities from the job description.\n- Use Markdown with clear section headings: Summary, Experience, Skills, Education.\n- Keep bullet points concise, achievement-focused, and supported by metrics when possible.\n- Maintain ATS-friendly formatting with consistent spacing and capitalization.\n${includeCoverLetter ? '- After the resume, add a new section titled "## Cover Letter" with 2-3 short paragraphs that extend the same tone and connect the candidate to the role.\n' : '- Do not include a cover letter or mention one unless explicitly asked.\n'}- Ensure the final document reads cohesively and feels written by one person.`;
-
-    const response = await openai.responses.create({
+    const response = await openai.chat.completions.create({
       model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
       temperature: 0.7,
-      max_output_tokens: 1600,
+      max_tokens: 1600,
       response_format: {
         type: 'json_schema',
         json_schema: {
@@ -139,46 +188,22 @@ export default withSessionRoute(async function generateRoute(
           }
         }
       },
-      input: [
+      messages: [
         {
           role: 'system',
-          content: [
-            {
-              type: 'text',
-              text:
-                'You are an expert resume writer. Always respond with valid JSON that matches the provided schema. The tailored resume must be concise, achievement-focused, and formatted in Markdown so it can be pasted directly into an ATS.'
-            }
-          ]
+          content: 'You are an expert resume writer. Always respond with valid JSON that matches the provided schema. The tailored resume must be concise, achievement-focused, and formatted in Markdown so it can be pasted directly into an ATS.'
         },
         {
           role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `Job description:\n${jobDescription}`
-            },
-            {
-              type: 'text',
-              text: `Candidate resume:\n${resume}`
-            },
-            {
-              type: 'text',
-              text:
-                'Rewrite the resume so it mirrors the tone and language of the job post, highlights the most relevant experiences with metrics, and keeps a professional, ATS-friendly structure with clear Summary, Experience, Skills, and Education sections.'
-            },
-            {
-              type: 'text',
-              text:
-                'Also identify which keywords from the job description are reflected in the rewrite, which skills are still missing, and provide practical suggestions the candidate can act on to further tailor the resume.'
-            }
-          ]
+          content: `Job description:\n${sanitizedJobDescription}\n\nCandidate resume:\n${sanitizedResume}\n\nPersonalization targets:\n- ${toneGuidance[tone]}\n- ${seniorityGuidance[seniority]}\n- ${formatGuidance[format]}\n\nRewrite requirements:\n- Mirror the most important keywords, tools, and priorities from the job description.\n- Use Markdown with clear section headings: Summary, Experience, Skills, Education.\n- Keep bullet points concise, achievement-focused, and supported by metrics when possible.\n- Maintain ATS-friendly formatting with consistent spacing and capitalization.\n${includeCoverLetter ? '- After the resume, add a new section titled "## Cover Letter" with 2-3 short paragraphs that extend the same tone and connect the candidate to the role.\n' : '- Do not include a cover letter or mention one unless explicitly asked.\n'}- Ensure the final document reads cohesively and feels written by one person.\n\nAlso identify which keywords from the job description are reflected in the rewrite, which skills are still missing, and provide practical suggestions the candidate can act on to further tailor the resume.`
         }
       ]
     });
 
-    const rawOutput = response.output_text?.trim();
+    const rawOutput = response.choices[0]?.message?.content?.trim();
 
     if (!rawOutput) {
+      logError('OpenAI returned empty response', undefined, { userId: user.id });
       return res.status(500).json({ error: 'The AI response was empty. Please try again.' });
     }
 
@@ -187,7 +212,10 @@ export default withSessionRoute(async function generateRoute(
       const parsed = JSON.parse(rawOutput);
       payload = tailoringPayloadSchema.parse(parsed);
     } catch (parseError) {
-      console.error('Failed to parse OpenAI response', parseError, rawOutput);
+      logError('Failed to parse OpenAI response', parseError as Error, { 
+        userId: user.id, 
+        rawOutput: rawOutput.substring(0, 500) 
+      });
       return res.status(500).json({ error: 'The AI response was invalid. Please try again.' });
     }
 
@@ -199,14 +227,18 @@ export default withSessionRoute(async function generateRoute(
       suggestedImprovements
     };
 
+    const result = { result: tailoredResume, insights };
+
+    // Cache the result
+    cache.set(cacheKey, result, cacheTTL.resumeGeneration);
+
     await prisma.$transaction([
       prisma.resumeGeneration.create({
         data: {
-          jobDescription,
-          originalResume: resume,
+          jobDescription: sanitizedJobDescription,
+          originalResume: sanitizedResume,
           generatedResume: tailoredResume,
           insights: JSON.stringify(insights),
-          generatedResume: result,
           tone,
           seniority,
           format,
@@ -222,9 +254,19 @@ export default withSessionRoute(async function generateRoute(
       })
     ]);
 
-    return res.status(200).json({ result: tailoredResume, insights });
+    logInfo('Resume generation completed successfully', { 
+      userId: user.id, 
+      resumeLength: tailoredResume.length,
+      matchedKeywordsCount: matchedKeywords.length,
+      missingSkillsCount: missingSkills.length
+    });
+
+    return res.status(200).json(result);
   } catch (error) {
-    console.error(error);
+    logError('Resume generation failed', error as Error, { 
+      userId: user.id,
+      errorType: error instanceof Error ? error.constructor.name : 'Unknown'
+    });
     return res.status(500).json({ error: 'Failed to tailor your resume. Please try again.' });
   }
 });

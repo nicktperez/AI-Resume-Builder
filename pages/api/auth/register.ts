@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { z } from 'zod';
 import { prisma } from '../../../lib/prisma';
 import { hashPassword } from '../../../lib/auth';
-import { withSessionRoute } from '../../../lib/withSession';
+import { withSessionRoute, NextApiRequestWithSession } from '../../../lib/withSession';
 
 const schema = z.object({
   email: z.string().email(),
@@ -11,7 +11,7 @@ const schema = z.object({
 });
 
 export default withSessionRoute(async function registerRoute(
-  req: NextApiRequest,
+  req: NextApiRequestWithSession,
   res: NextApiResponse
 ) {
   if (req.method !== 'POST') {

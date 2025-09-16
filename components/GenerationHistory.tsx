@@ -12,6 +12,7 @@ interface GenerationItem {
   seniority: 'entry-level' | 'mid-level' | 'senior';
   format: 'traditional' | 'modern' | 'compact';
   includeCoverLetter: boolean;
+  insights?: InsightSummary;
 }
 
 interface HistoryResponse {
@@ -81,8 +82,7 @@ export default function GenerationHistory({ refreshKey }: { refreshKey: number }
       <h3>Recent tailored resumes</h3>
       <div className={styles.list}>
         {data.generations.map((generation) => (
-          <div key={generation.id} className={styles.entry}>
-          <div key={generation.id} style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem' }}>
+          <div key={generation.id} className={styles.entry} style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem' }}>
             <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
               {new Date(generation.createdAt).toLocaleString()}
             </p>

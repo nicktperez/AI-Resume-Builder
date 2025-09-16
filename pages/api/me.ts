@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../lib/prisma';
-import { withSessionRoute } from '../../lib/withSession';
+import { withSessionRoute, NextApiRequestWithSession } from '../../lib/withSession';
 
-export default withSessionRoute(async function meRoute(req: NextApiRequest, res: NextApiResponse) {
+export default withSessionRoute(async function meRoute(req: NextApiRequestWithSession, res: NextApiResponse) {
   if (!req.session.userId) {
     return res.status(200).json({ user: null });
   }

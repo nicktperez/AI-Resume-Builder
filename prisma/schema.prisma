@@ -14,11 +14,16 @@ model User {
   passwordHash           String
   isPro                  Boolean  @default(false)
   resumeCount            Int      @default(0)
-  stripeCustomerId       String?
-  stripeSubscriptionId   String?
+  stripeCustomerId       String?  @unique
+  stripeSubscriptionId   String?  @unique
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
   generations            ResumeGeneration[]
+
+  @@index([email])
+  @@index([isPro])
+  @@index([createdAt])
+  @@index([stripeCustomerId])
 }
 
 model ResumeGeneration {
@@ -34,4 +39,8 @@ model ResumeGeneration {
   createdAt        DateTime @default(now())
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId           String
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([tone, seniority, format])
 }
