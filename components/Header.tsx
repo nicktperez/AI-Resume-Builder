@@ -37,7 +37,12 @@ export default function Header() {
           <Link href="/#pricing" aria-label="View pricing plans">Pricing</Link>
           <Link href="/#comparison" aria-label="Compare with competitors">Compare</Link>
           {isAuthenticated ? (
-            <Link href="/dashboard" aria-label="Go to workspace">Workspace</Link>
+            <>
+              <Link href="/dashboard" aria-label="Go to workspace">Workspace</Link>
+              {data?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL && (
+                <Link href="/admin" aria-label="Admin dashboard">Admin</Link>
+              )}
+            </>
           ) : (
             <Link href="/login" aria-label="Sign in to your account">Login</Link>
           )}

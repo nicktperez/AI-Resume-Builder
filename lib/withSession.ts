@@ -4,6 +4,7 @@ import type { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 export interface NextApiRequestWithSession extends NextApiRequest {
   session: {
     userId?: string;
+    email?: string;
     destroy: () => Promise<void>;
     save: () => Promise<void>;
   };

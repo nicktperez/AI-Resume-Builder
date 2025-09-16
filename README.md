@@ -57,6 +57,8 @@ cp .env.example .env.local
 | `OPENAI_MODEL` | (Optional) Override the OpenAI model. Defaults to `gpt-4o-mini`. |
 | `SESSION_PASSWORD` | 32+ char secret for signing user sessions. |
 | `STRIPE_SECRET_KEY` | Stripe secret key used to create checkout sessions. |
+| `ADMIN_EMAIL` | Email address for admin access. |
+| `NEXT_PUBLIC_ADMIN_EMAIL` | Same as ADMIN_EMAIL for client-side checks. |
 | `STRIPE_PRICE_ID` | Price ID for the recurring Pro subscription. |
 | `STRIPE_WEBHOOK_SECRET` | Secret from your Stripe webhook endpoint. |
 | `NEXT_PUBLIC_BASE_URL` | Public URL for redirecting to success/cancel pages. |

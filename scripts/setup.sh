@@ -46,6 +46,10 @@ OPENAI_MODEL="gpt-4o-mini"
 # App Configuration
 NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 
+# Admin Access (CHANGE TO YOUR EMAIL!)
+ADMIN_EMAIL="admin@example.com"
+NEXT_PUBLIC_ADMIN_EMAIL="admin@example.com"
+
 # Optional: Error Monitoring
 # SENTRY_DSN="your-sentry-dsn"
 EOF

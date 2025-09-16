@@ -36,6 +36,7 @@ export default withSessionRoute(async function loginRoute(
   }
 
   req.session.userId = user.id;
+  req.session.email = user.email;
   await req.session.save();
 
   return res.status(200).json({
