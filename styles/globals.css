@@ -60,7 +60,8 @@ button.primary:hover {
 }
 
 input,
-textarea {
+textarea,
+select {
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: 12px;
@@ -71,6 +72,21 @@ textarea {
   resize: vertical;
 }
 
+select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 20px) calc(1.2rem), calc(100% - 15px) calc(1.2rem);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
 label {
   font-weight: 600;
   display: block;
@@ -79,6 +95,12 @@ label {
 
 form .field {
   margin-bottom: 1.5rem;
+}
+
+form .helper {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
 }
 
 .error {

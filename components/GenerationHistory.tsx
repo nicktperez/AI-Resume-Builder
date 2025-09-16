@@ -5,11 +5,33 @@ interface GenerationItem {
   jobDescription: string;
   generatedResume: string;
   createdAt: string;
+  tone: 'professional' | 'friendly' | 'bold';
+  seniority: 'entry-level' | 'mid-level' | 'senior';
+  format: 'traditional' | 'modern' | 'compact';
+  includeCoverLetter: boolean;
 }
 
 interface HistoryResponse {
   generations: GenerationItem[];
 }
+
+const toneLabels: Record<GenerationItem['tone'], string> = {
+  professional: 'Professional polish',
+  friendly: 'Friendly & warm',
+  bold: 'Bold & energetic'
+};
+
+const seniorityLabels: Record<GenerationItem['seniority'], string> = {
+  'entry-level': 'Entry-level focus',
+  'mid-level': 'Mid-level contributor',
+  senior: 'Senior leadership'
+};
+
+const formatLabels: Record<GenerationItem['format'], string> = {
+  traditional: 'Traditional chronological',
+  modern: 'Modern impact-driven',
+  compact: 'Compact one-page'
+};
 
 const fetcher = async (url: string) => {
   const res = await fetch(url);
@@ -47,6 +69,12 @@ export default function GenerationHistory({ refreshKey }: { refreshKey: number }
           <div key={generation.id} style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1.5rem' }}>
             <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
               {new Date(generation.createdAt).toLocaleString()}
+            </p>
+            <p style={{ color: 'var(--muted)', fontSize: '0.9rem', margin: '0 0 0.75rem' }}>
+              Tone: <strong style={{ color: 'var(--foreground)' }}>{toneLabels[generation.tone]}</strong> · Focus:{' '}
+              <strong style={{ color: 'var(--foreground)' }}>{seniorityLabels[generation.seniority]}</strong> · Format:{' '}
+              <strong style={{ color: 'var(--foreground)' }}>{formatLabels[generation.format]}</strong> · Cover letter:{' '}
+              <strong style={{ color: 'var(--foreground)' }}>{generation.includeCoverLetter ? 'Included' : 'Not included'}</strong>
             </p>
             <details>
               <summary style={{ cursor: 'pointer', fontWeight: 600 }}>View tailored resume</summary>

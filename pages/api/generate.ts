@@ -4,9 +4,38 @@ import { z } from 'zod';
 import { prisma } from '../../lib/prisma';
 import { withSessionRoute } from '../../lib/withSession';
 
+const toneSchema = z.enum(['professional', 'friendly', 'bold']);
+const senioritySchema = z.enum(['entry-level', 'mid-level', 'senior']);
+const formatSchema = z.enum(['traditional', 'modern', 'compact']);
+
+const toneGuidance: Record<z.infer<typeof toneSchema>, string> = {
+  professional: 'Adopt a polished, executive tone that feels confident yet approachable.',
+  friendly: 'Use a warm, collaborative voice while staying professional and clear.',
+  bold: 'Lean into an energetic, results-driven tone that spotlights ambitious achievements.'
+};
+
+const seniorityGuidance: Record<z.infer<typeof senioritySchema>, string> = {
+  'entry-level':
+    'Emphasize transferable skills, coursework, internships, and early wins suited for an entry-level candidate.',
+  'mid-level':
+    'Balance strategic contributions with hands-on execution that a mid-level professional is expected to demonstrate.',
+  senior:
+    'Highlight leadership, vision, cross-functional impact, and decision-making expected from senior talent.'
+};
+
+const formatGuidance: Record<z.infer<typeof formatSchema>, string> = {
+  traditional: 'Use a traditional chronological structure with clearly separated roles and bullet points.',
+  modern: 'Use a modern, accomplishment-led layout that foregrounds impact statements and key wins.',
+  compact: 'Keep sections concise and skimmable so the resume comfortably fits on a single page.'
+};
+
 const schema = z.object({
   jobDescription: z.string().min(20, 'Please provide a detailed job description.'),
-  resume: z.string().min(50, 'Please paste the full text of your resume.')
+  resume: z.string().min(50, 'Please paste the full text of your resume.'),
+  tone: toneSchema,
+  seniority: senioritySchema,
+  format: formatSchema,
+  includeCoverLetter: z.boolean()
 });
 
 export default withSessionRoute(async function generateRoute(
@@ -43,12 +72,12 @@ export default withSessionRoute(async function generateRoute(
     return res.status(402).json({ error: 'Upgrade to Pro for unlimited resumes.' });
   }
 
-  const { jobDescription, resume } = parse.data;
+  const { jobDescription, resume, tone, seniority, format, includeCoverLetter } = parse.data;
 
   try {
     const openai = new OpenAI({ apiKey });
 
-    const prompt = `You are an expert resume writer. Rewrite the following resume so it is perfectly tailored for the job description.\n\nJob description:\n${jobDescription}\n\nCandidate resume:\n${resume}\n\nRewrite the resume to:\n- Mirror the tone and language of the job post\n- Highlight the most relevant experiences, metrics, and keywords\n- Keep a professional, ATS-friendly structure\n- Output in Markdown with clear section headings (Summary, Experience, Skills, Education)\n`;
+    const prompt = `You are an expert resume writer. Rewrite the following resume so it is perfectly tailored for the job description.\n\nJob description:\n${jobDescription}\n\nCandidate resume:\n${resume}\n\nPersonalization targets:\n- ${toneGuidance[tone]}\n- ${seniorityGuidance[seniority]}\n- ${formatGuidance[format]}\n\nRewrite requirements:\n- Mirror the most important keywords, tools, and priorities from the job description.\n- Use Markdown with clear section headings: Summary, Experience, Skills, Education.\n- Keep bullet points concise, achievement-focused, and supported by metrics when possible.\n- Maintain ATS-friendly formatting with consistent spacing and capitalization.\n${includeCoverLetter ? '- After the resume, add a new section titled "## Cover Letter" with 2-3 short paragraphs that extend the same tone and connect the candidate to the role.\n' : '- Do not include a cover letter or mention one unless explicitly asked.\n'}- Ensure the final document reads cohesively and feels written by one person.`;
 
     const response = await openai.responses.create({
       model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
@@ -69,6 +98,10 @@ export default withSessionRoute(async function generateRoute(
           jobDescription,
           originalResume: resume,
           generatedResume: result,
+          tone,
+          seniority,
+          format,
+          includeCoverLetter,
           userId: user.id
         }
       }),

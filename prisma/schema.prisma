@@ -26,6 +26,10 @@ model ResumeGeneration {
   jobDescription   String
   originalResume   String
   generatedResume  String
+  tone             String   @default("professional")
+  seniority        String   @default("mid-level")
+  format           String   @default("modern")
+  includeCoverLetter Boolean @default(false)
   createdAt        DateTime @default(now())
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId           String
