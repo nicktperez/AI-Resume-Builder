@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String   @id @default(cuid())
+  email                  String   @unique
+  name                   String?
+  passwordHash           String
+  isPro                  Boolean  @default(false)
+  resumeCount            Int      @default(0)
+  stripeCustomerId       String?
+  stripeSubscriptionId   String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  generations            ResumeGeneration[]
+}
+
+model ResumeGeneration {
+  id               String   @id @default(cuid())
+  jobDescription   String
+  originalResume   String
+  generatedResume  String
+  createdAt        DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+}
